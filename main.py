@@ -41,6 +41,7 @@ logging.config.dictConfig({
         ]
     }
 })
+# NIKE_HOME_URL = "https://www.nike.com/jp/login"
 
 
 NIKE_HOME_URL = "https://www.nike.com/login"
@@ -95,6 +96,7 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
                 substring = "size="
                 if substring in url:
                     skip_size_selection = True
+                LOGGER.info('Init find size: ' + shoe_type)
                 select_shoe_size(driver=driver, shoe_size=shoe_size, shoe_type=shoe_type, skip_size_selection=skip_size_selection)
             except Exception as e:
                 # Try refreshing page since you can't click Buy button without selecting size (except if size parameter passed in)
@@ -278,7 +280,7 @@ def retry_login(driver, username, password):
     LOGGER.info("Successfully logged in")
     
 def select_shoe_size(driver, shoe_size, shoe_type, skip_size_selection):
-    LOGGER.info("Waiting for size dropdown to appear")
+    LOGGER.info("Waiting for size dropdown to appear" + shoe_type)
 
     wait_until_visible(driver, class_name="size-grid-button", duration=10)
 
@@ -290,35 +292,18 @@ def select_shoe_size(driver, shoe_size, shoe_type, skip_size_selection):
         # Get first element found text
         size_text = driver.find_element_by_xpath("//li[@data-qa='size-available']/button").text
         
-    
-        special_shoe_type = False
-        # Determine if size only displaying or size type + size
+        # Because located in JP, shoe size type format JP + shoe_size
         if re.search("[a-zA-Z]", size_text):
-    
-            if shoe_type in ("Y", "C"):
-                shoe_size_type = shoe_size + shoe_type
-            elif shoe_size is None and shoe_type in ("XXS", "XS", "S", "M", "L", "XL"):
-                shoe_size_type = shoe_type
-                special_shoe_type = True  
-            else:
-                shoe_size_type = shoe_type + " " + shoe_size
-     
-            LOGGER.info("Shoe size/type=" + shoe_size_type)
-            
-            if special_shoe_type:
-                driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
-                    "//button[text()='{}']".format(shoe_size_type)).click()
-            else:
-                driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
-                    "//button[text()[contains(.,'"+shoe_size_type+"')]]").click()
-                
-        else:
-        
+            LOGGER.info('shoe type: ' + shoe_type)
+            shoe_size_type = "JP " + shoe_size
             driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
-                "//button[text()='{}']".format(shoe_size)).click()
+                        "//button[text()='{}']".format(shoe_size_type)).click()
+            # Click add to cart
+            driver.find_element_by_xpath("//button[@data-qa='add-to-cart']").click()
 
 
 def click_buy_button(driver):
+    # Need format for JP site
     xpath = "//button[@data-qa='feed-buy-cta']"
     
     LOGGER.info("Waiting for buy button to become present")
